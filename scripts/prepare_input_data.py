@@ -23,7 +23,7 @@ def download_kaggle_dataset(dataset: str) -> None:
     project_root = Path(__file__).resolve().parents[1]
     env = os.environ.copy()
     env.setdefault("KAGGLE_CONFIG_DIR", str(project_root / ".kaggle"))
-    env.setdefault("KAGGLE_API_TOKEN", str(project_root / ".kaggle" / "access_token"))
+    env.setdefault("KAGGLE_API_TOKEN", str(Path.home() / ".kaggle" / "access_token"))
     kaggle_executable = shutil.which("kaggle") or str(Path(sys.executable).resolve().parent / "kaggle")
     if not Path(kaggle_executable).exists():
         raise FileNotFoundError(

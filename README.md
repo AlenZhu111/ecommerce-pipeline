@@ -69,26 +69,17 @@ Recommended dataset:
 mkechinov/ecommerce-behavior-data-from-multi-category-store
 ```
 
-Install and configure Kaggle:
+Install and configure Kaggle with the access-token method:
 
 ```bash
-pip install kaggle
-mkdir -p .kaggle
+pip install kaggle==2.1.2
+mkdir -p ~/.kaggle
+echo "<your-kaggle-access-token>" > ~/.kaggle/access_token
+chmod 600 ~/.kaggle/access_token
+export KAGGLE_API_TOKEN="$HOME/.kaggle/access_token"
 ```
 
-Download `kaggle.json` from your Kaggle account settings and place it in `.kaggle/kaggle.json`.
-
-```bash
-chmod 600 .kaggle/kaggle.json
-export KAGGLE_CONFIG_DIR="$(pwd)/.kaggle"
-```
-
-If you use Kaggle's newer access-token method instead, place the token in `.kaggle/access_token` and export:
-
-```bash
-chmod 600 .kaggle/access_token
-export KAGGLE_API_TOKEN="$(pwd)/.kaggle/access_token"
-```
+Do not commit or share the real token. If a token appears in a screenshot, repository, or public note, revoke it and create a new one.
 
 Then run:
 

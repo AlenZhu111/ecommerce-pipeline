@@ -215,7 +215,7 @@ The DAG must support these environment variables:
 ```text
 PIPELINE_SOURCE=generated|kaggle
 PIPELINE_ROWS=100000
-KAGGLE_API_TOKEN=.kaggle/access_token
+KAGGLE_API_TOKEN=~/.kaggle/access_token
 PROJECT_ROOT=<project path>
 JAVA_HOME=<jdk path>
 SPARK_HOME=<pyspark path>

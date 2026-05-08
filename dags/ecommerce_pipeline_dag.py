@@ -26,7 +26,7 @@ SPARK_HOME = os.environ.get("SPARK_HOME", default_spark_home())
 JAVA_HOME = os.environ.get("JAVA_HOME", "/opt/homebrew/opt/openjdk@17")
 COMMAND_ENV = f"JAVA_HOME={JAVA_HOME} SPARK_HOME={SPARK_HOME} PYTHONPATH={PROJECT_ROOT}"
 KAGGLE_CONFIG_DIR = os.environ.get("KAGGLE_CONFIG_DIR", f"{PROJECT_ROOT}/.kaggle")
-KAGGLE_API_TOKEN = os.environ.get("KAGGLE_API_TOKEN", f"{PROJECT_ROOT}/.kaggle/access_token")
+KAGGLE_API_TOKEN = os.environ.get("KAGGLE_API_TOKEN", os.path.expanduser("~/.kaggle/access_token"))
 COMMAND_ENV = f"{COMMAND_ENV} KAGGLE_CONFIG_DIR={KAGGLE_CONFIG_DIR} KAGGLE_API_TOKEN={KAGGLE_API_TOKEN}"
 PIPELINE_SOURCE = os.environ.get("PIPELINE_SOURCE", "generated")
 PIPELINE_ROWS = os.environ.get("PIPELINE_ROWS", "100000")

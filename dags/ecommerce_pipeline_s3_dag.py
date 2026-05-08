@@ -8,7 +8,7 @@ from airflow.operators.bash import BashOperator
 
 
 PROJECT_ROOT = os.environ.get("PROJECT_ROOT", "/home/ubuntu/ecommerce-pipeline")
-S3_PREFIX = os.environ.get("S3_PREFIX", "s3://s3-test-bucket-stella/ecommerce-event-pipeline").rstrip("/")
+S3_PREFIX = os.environ.get("S3_PREFIX", "s3://<bucket>/ecommerce-event-pipeline").rstrip("/")
 JAVA_HOME = os.environ.get("JAVA_HOME", "/usr/lib/jvm/java-17-openjdk-amd64")
 SPARK_HOME = os.environ.get("SPARK_HOME", f"{PROJECT_ROOT}/.venv/lib/python3.12/site-packages/pyspark")
 COMMAND_ENV = (
