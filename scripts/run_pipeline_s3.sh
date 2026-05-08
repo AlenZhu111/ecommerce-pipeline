@@ -6,7 +6,8 @@ if [[ $# -ne 1 ]]; then
   exit 1
 fi
 
-S3_PREFIX="${1%/}"
+AWS_S3_PREFIX="${1%/}"
+SPARK_S3_PREFIX="${AWS_S3_PREFIX/#s3:\/\//s3a://}"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PYTHONPATH="${PROJECT_ROOT}"
 export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}"
@@ -25,22 +26,22 @@ SPARK_S3_CONF=(
 )
 
 "${SPARK_SUBMIT}" "${SPARK_S3_CONF[@]}" "${PROJECT_ROOT}/spark_jobs/data_quality_checks.py" \
-  --input "${S3_PREFIX}/corrupted/ecommerce_events_with_bad_records.csv" \
+  --input "${SPARK_S3_PREFIX}/corrupted/ecommerce_events_with_bad_records.csv" \
   --report "${PROJECT_ROOT}/reports/data_quality_report.json"
 
-aws s3 cp "${PROJECT_ROOT}/reports/data_quality_report.json" "${S3_PREFIX}/reports/data_quality_report.json"
+aws s3 cp "${PROJECT_ROOT}/reports/data_quality_report.json" "${AWS_S3_PREFIX}/reports/data_quality_report.json"
 
 "${SPARK_SUBMIT}" "${SPARK_S3_CONF[@]}" "${PROJECT_ROOT}/spark_jobs/clean_events.py" \
-  --input "${S3_PREFIX}/corrupted/ecommerce_events_with_bad_records.csv" \
-  --output "${S3_PREFIX}/curated/events"
+  --input "${SPARK_S3_PREFIX}/corrupted/ecommerce_events_with_bad_records.csv" \
+  --output "${SPARK_S3_PREFIX}/curated/events"
 
 "${SPARK_SUBMIT}" "${SPARK_S3_CONF[@]}" "${PROJECT_ROOT}/spark_jobs/aggregate_events.py" \
-  --input "${S3_PREFIX}/curated/events" \
-  --output "${S3_PREFIX}/analytics"
+  --input "${SPARK_S3_PREFIX}/curated/events" \
+  --output "${SPARK_S3_PREFIX}/analytics"
 
 "${SPARK_SUBMIT}" "${SPARK_S3_CONF[@]}" "${PROJECT_ROOT}/spark_jobs/verify_outputs.py" \
-  --curated "${S3_PREFIX}/curated/events" \
-  --analytics "${S3_PREFIX}/analytics" \
+  --curated "${SPARK_S3_PREFIX}/curated/events" \
+  --analytics "${SPARK_S3_PREFIX}/analytics" \
   --report "${PROJECT_ROOT}/reports/output_verification_report.json"
 
-aws s3 cp "${PROJECT_ROOT}/reports/output_verification_report.json" "${S3_PREFIX}/reports/output_verification_report.json"
+aws s3 cp "${PROJECT_ROOT}/reports/output_verification_report.json" "${AWS_S3_PREFIX}/reports/output_verification_report.json"

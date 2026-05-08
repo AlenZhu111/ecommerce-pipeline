@@ -82,7 +82,7 @@ scripts/sync_raw_to_s3.sh s3://<bucket>/ecommerce-event-pipeline
 scripts/run_pipeline_s3.sh s3://<bucket>/ecommerce-event-pipeline
 ```
 
-This writes curated Parquet and analytics Parquet directly to S3.
+This writes curated Parquet and analytics Parquet directly to S3. The script accepts an `s3://` path for convenience and converts Spark input/output paths to `s3a://` internally.
 
 ## 6. Validate Results
 
