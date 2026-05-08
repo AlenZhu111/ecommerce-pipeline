@@ -5,7 +5,6 @@ import os
 import shutil
 import subprocess
 import sys
-import zipfile
 from pathlib import Path
 
 import pandas as pd
@@ -55,26 +54,30 @@ def prepare_generated(rows: int, seed: int, output: Path) -> None:
 
 
 def prepare_kaggle(rows: int, source_file: Path, output: Path, dataset: str) -> None:
+    zip_file = source_file.with_suffix(source_file.suffix + ".zip")
     if not source_file.exists():
-        zip_file = source_file.with_suffix(source_file.suffix + ".zip")
         if zip_file.exists():
-            print(f"{source_file} not found. Extracting {zip_file}...")
-            with zipfile.ZipFile(zip_file) as archive:
-                archive.extract(source_file.name, path=source_file.parent)
+            print(f"{source_file} not found. Sampling directly from {zip_file}...")
         else:
             print(f"{source_file} not found. Downloading Kaggle dataset {dataset}...")
             download_kaggle_dataset(dataset)
 
-    if not source_file.exists():
+    if not source_file.exists() and not zip_file.exists():
         raise FileNotFoundError(
-            f"Expected Kaggle CSV at {source_file}. If the dataset file name changed, "
+            f"Expected Kaggle CSV at {source_file} or zip at {zip_file}. If the dataset file name changed, "
             "pass --kaggle-file with the downloaded CSV path."
         )
 
     RAW_DIR.mkdir(parents=True, exist_ok=True)
-    sample = pd.read_csv(source_file, nrows=rows)
+    if source_file.exists():
+        sample = pd.read_csv(source_file, nrows=rows)
+        source_label = str(source_file)
+    else:
+        sample = pd.read_csv(zip_file, compression="zip", nrows=rows)
+        source_label = str(zip_file)
+
     sample.to_csv(output, index=False)
-    print(f"Wrote {len(sample):,} Kaggle rows from {source_file} to {output}")
+    print(f"Wrote {len(sample):,} Kaggle rows from {source_label} to {output}")
 
 
 def main() -> None:

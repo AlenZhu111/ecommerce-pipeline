@@ -84,6 +84,17 @@ scripts/run_pipeline_s3.sh s3://<bucket>/ecommerce-event-pipeline
 
 This writes curated Parquet and analytics Parquet directly to S3. The script accepts an `s3://` path for convenience and converts Spark input/output paths to `s3a://` internally.
 
+To orchestrate the same S3 flow with Airflow, set `S3_PREFIX` and trigger the `ecommerce_event_pipeline_s3` DAG:
+
+```bash
+export AIRFLOW_HOME="$(pwd)/airflow"
+export PROJECT_ROOT="$(pwd)"
+export S3_PREFIX=s3://<bucket>/ecommerce-event-pipeline
+export PYTHONPATH="$(pwd)"
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export SPARK_HOME="$(python -c 'import pathlib, pyspark; print(pathlib.Path(pyspark.__file__).parent)')"
+```
+
 ## 6. Validate Results
 
 ```bash

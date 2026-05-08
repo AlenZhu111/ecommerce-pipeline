@@ -83,6 +83,7 @@ def main() -> None:
     bad = pd.DataFrame(BAD_RECORDS)
     output = pd.concat([df, duplicates, bad], ignore_index=True)
     output.to_csv(args.output, index=False)
+    print(f"Read {len(df):,} rows from {args.input}")
     print(f"Wrote {len(output):,} rows to {args.output}")
     print(f"Injected {len(duplicates):,} duplicates and {len(bad):,} bad records")
 
