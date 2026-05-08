@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 from datetime import datetime
 
 from airflow import DAG
@@ -10,7 +11,18 @@ from airflow.operators.bash import BashOperator
 PROJECT_ROOT = os.environ.get("PROJECT_ROOT", "/opt/airflow/project")
 PYTHON_BIN = os.environ.get("PYTHON_BIN", f"{PROJECT_ROOT}/.venv/bin/python")
 SPARK_SUBMIT = os.environ.get("SPARK_SUBMIT", f"{PROJECT_ROOT}/.venv/bin/spark-submit")
-SPARK_HOME = os.environ.get("SPARK_HOME", f"{PROJECT_ROOT}/.venv/lib/python3.12/site-packages/pyspark")
+
+
+def default_spark_home() -> str:
+    try:
+        import pyspark
+
+        return str(pathlib.Path(pyspark.__file__).parent)
+    except ImportError:
+        return f"{PROJECT_ROOT}/.venv/lib/python3.12/site-packages/pyspark"
+
+
+SPARK_HOME = os.environ.get("SPARK_HOME", default_spark_home())
 JAVA_HOME = os.environ.get("JAVA_HOME", "/opt/homebrew/opt/openjdk@17")
 COMMAND_ENV = f"JAVA_HOME={JAVA_HOME} SPARK_HOME={SPARK_HOME} PYTHONPATH={PROJECT_ROOT}"
 KAGGLE_CONFIG_DIR = os.environ.get("KAGGLE_CONFIG_DIR", f"{PROJECT_ROOT}/.kaggle")

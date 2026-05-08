@@ -29,7 +29,7 @@ If you installed Java with Homebrew on macOS, use this environment when running 
 
 ```bash
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17
-export SPARK_HOME="$(pwd)/.venv/lib/python3.12/site-packages/pyspark"
+export SPARK_HOME="$(python -c 'import pathlib, pyspark; print(pathlib.Path(pyspark.__file__).parent)')"
 export PYTHONPATH="$(pwd)"
 ```
 

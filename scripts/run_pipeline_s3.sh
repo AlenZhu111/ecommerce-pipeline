@@ -10,7 +10,11 @@ S3_PREFIX="${1%/}"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PYTHONPATH="${PROJECT_ROOT}"
 export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}"
-export SPARK_HOME="${SPARK_HOME:-${PROJECT_ROOT}/.venv/lib/python3.12/site-packages/pyspark}"
+if [[ -z "${SPARK_HOME:-}" ]]; then
+  export SPARK_HOME="$(
+    "${PROJECT_ROOT}/.venv/bin/python" -c 'import pathlib, pyspark; print(pathlib.Path(pyspark.__file__).parent)'
+  )"
+fi
 
 SPARK_SUBMIT="${SPARK_SUBMIT:-${PROJECT_ROOT}/.venv/bin/spark-submit}"
 S3A_PACKAGES="${S3A_PACKAGES:-org.apache.hadoop:hadoop-aws:3.3.4}"
