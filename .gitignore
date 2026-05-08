@@ -1,0 +1,13 @@
+__pycache__/
+*.swp
+.venv/
+.env
+.kaggle/
+*.zip
+data/raw/*.csv
+data/corrupted/*.csv
+data/curated/
+data/analytics/
+reports/*.json
+reports/*.csv
+airflow_home/
