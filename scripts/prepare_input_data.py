@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 import zipfile
@@ -24,8 +25,15 @@ def download_kaggle_dataset(dataset: str) -> None:
     env = os.environ.copy()
     env.setdefault("KAGGLE_CONFIG_DIR", str(project_root / ".kaggle"))
     env.setdefault("KAGGLE_API_TOKEN", str(project_root / ".kaggle" / "access_token"))
+    kaggle_executable = shutil.which("kaggle") or str(Path(sys.executable).resolve().parent / "kaggle")
+    if not Path(kaggle_executable).exists():
+        raise FileNotFoundError(
+            "Kaggle CLI was not found. Activate the virtual environment and install it with "
+            "`pip install kaggle==2.1.2`, then rerun this command."
+        )
+
     command = [
-        str(Path(sys.executable).resolve().parent / "kaggle"),
+        kaggle_executable,
         "datasets",
         "download",
         "--file",
