@@ -129,7 +129,7 @@ FROM DAILY_METRICS
 ORDER BY EVENT_DATE;
 ```
 
-## 6. Interview Explanation
+## 6. Project Explanation
 
 Use this explanation:
 

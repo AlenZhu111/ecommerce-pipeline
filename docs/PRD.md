@@ -46,7 +46,7 @@ Analytics teams need a reliable pipeline that can:
 
 - **Data Engineer / Developer:** runs and maintains the pipeline.
 - **Data Analyst / Business User:** consumes analytics tables for reporting.
-- **Project Reviewer:** evaluates data engineering design, implementation, testing, and trade-off reasoning.
+- **Technical Reader:** evaluates data engineering design, implementation, testing, and trade-off reasoning.
 
 ## 6. Dataset
 
