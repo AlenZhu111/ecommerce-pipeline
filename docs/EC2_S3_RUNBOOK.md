@@ -268,6 +268,7 @@ Set environment variables:
 ```bash
 export AIRFLOW_HOME="$(pwd)/airflow"
 export PROJECT_ROOT="$(pwd)"
+export AIRFLOW__CORE__DAGS_FOLDER="$(pwd)/dags"
 export S3_PREFIX=s3://<bucket>/ecommerce-event-pipeline
 export PYTHONPATH="$(pwd)"
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
@@ -276,17 +277,25 @@ export AIRFLOW__CORE__EXECUTOR=SequentialExecutor
 export AIRFLOW__CORE__LOAD_EXAMPLES=False
 ```
 
+Alternatively, set `S3_PREFIX` in the Airflow website:
+
+```text
+Admin -> Variables -> Add
+Key: S3_PREFIX
+Value: s3://<bucket>/ecommerce-event-pipeline
+```
+
 Initialize Airflow:
 
 ```bash
 airflow db migrate
 airflow users create \
-  --username admin \
-  --firstname Ailing \
-  --lastname Zhu \
+  --username <admin-username> \
+  --firstname <first-name> \
+  --lastname <last-name> \
   --role Admin \
-  --email admin@example.com \
-  --password admin
+  --email <email@example.com> \
+  --password '<admin-password>'
 ```
 
 Start Airflow:
@@ -314,8 +323,11 @@ The S3 DAG:
 ```text
 1. checks the corrupted CSV exists in S3
 2. runs scripts/run_pipeline_s3.sh
-3. prints the final verification report from S3
+3. optionally loads analytics outputs from S3 into Snowflake
+4. prints the final verification report from S3
 ```
+
+For the optional Snowflake warehouse layer, see [SNOWFLAKE_LAYER.md](SNOWFLAKE_LAYER.md).
 
 ## 9. Validate Results
 
@@ -363,6 +375,29 @@ test -x "$SPARK_HOME/bin/spark-class"
 
 Spark needs `s3a://`, not `s3://`. Use `scripts/run_pipeline_s3.sh`; it converts the path internally.
 
+### Airflow UI Opens But Shows Zero DAGs
+
+First confirm the webserver is healthy:
+
+```bash
+curl -I http://localhost:8080
+```
+
+`HTTP 302` with `Location: /home` is a healthy Airflow response. It means the webserver is running. If the DAG list is empty, Airflow is probably looking in the wrong DAG folder.
+
+Set the project DAG folder before starting Airflow:
+
+```bash
+export AIRFLOW__CORE__DAGS_FOLDER="$(pwd)/dags"
+```
+
+Then restart Airflow and check:
+
+```bash
+airflow dags list | grep ecommerce
+airflow dags list-import-errors
+```
+
 ### Corrupted File Still Has 10030 Rows
 
 The injector is probably reading the old default raw file. Use the default filename:
@@ -383,4 +418,4 @@ PYTHONPATH=. .venv/bin/python scripts/inject_bad_records.py \
 
 Use this explanation:
 
-> I validated the pipeline locally first, then moved it to EC2 and S3. S3 stores raw, corrupted, curated, analytics, and report layers. EC2 runs Spark, and Airflow orchestrates the S3 pipeline. I used a 1000-row sample from real Kaggle data for a low-cost demo, injected controlled bad records to test data quality, and designed the workflow so it can scale later to larger EC2, EMR, Glue, or MWAA.
+> I validated the pipeline locally first, then ran the cloud version on EC2 and S3. In the cloud version, EC2 downloads and samples Kaggle data, S3 stores raw, corrupted, curated, analytics, and report layers, Spark processes the S3 data, and Airflow orchestrates the S3 pipeline. I used a 1000-row sample from real Kaggle data for a low-cost demo, injected controlled bad records to test data quality, and designed the workflow so it can scale later to larger EC2, EMR, Glue, MWAA, or Snowflake.

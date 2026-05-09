@@ -1,21 +1,45 @@
 from __future__ import annotations
 
 import os
+import pathlib
+import shlex
 from datetime import datetime
 
 from airflow import DAG
+from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 
 
 PROJECT_ROOT = os.environ.get("PROJECT_ROOT", "/home/ubuntu/ecommerce-pipeline")
-S3_PREFIX = os.environ.get("S3_PREFIX", "s3://<bucket>/ecommerce-event-pipeline").rstrip("/")
 JAVA_HOME = os.environ.get("JAVA_HOME", "/usr/lib/jvm/java-17-openjdk-amd64")
-SPARK_HOME = os.environ.get("SPARK_HOME", f"{PROJECT_ROOT}/.venv/lib/python3.12/site-packages/pyspark")
+S3_PREFIX = (os.environ.get("S3_PREFIX") or Variable.get("S3_PREFIX", default_var="")).rstrip("/")
+ENABLE_SNOWFLAKE_LOAD = (
+    os.environ.get("ENABLE_SNOWFLAKE_LOAD")
+    or Variable.get("ENABLE_SNOWFLAKE_LOAD", default_var="false")
+).lower()
+
+
+def default_spark_home() -> str:
+    try:
+        import pyspark
+
+        return str(pathlib.Path(pyspark.__file__).parent)
+    except ImportError:
+        return f"{PROJECT_ROOT}/.venv/lib/python3.12/site-packages/pyspark"
+
+
+SPARK_HOME = os.environ.get("SPARK_HOME", default_spark_home())
 COMMAND_ENV = (
-    f"PROJECT_ROOT={PROJECT_ROOT} "
-    f"JAVA_HOME={JAVA_HOME} "
-    f"SPARK_HOME={SPARK_HOME} "
-    f"PYTHONPATH={PROJECT_ROOT}"
+    f"PROJECT_ROOT={shlex.quote(PROJECT_ROOT)} "
+    f"JAVA_HOME={shlex.quote(JAVA_HOME)} "
+    f"SPARK_HOME={shlex.quote(SPARK_HOME)} "
+    f"PYTHONPATH={shlex.quote(PROJECT_ROOT)}"
+)
+S3_PREFIX_ARG = shlex.quote(S3_PREFIX)
+PROJECT_ROOT_ARG = shlex.quote(PROJECT_ROOT)
+REQUIRE_S3_PREFIX = (
+    f"test -n {S3_PREFIX_ARG} || "
+    '(echo "Set S3_PREFIX as an environment variable or Airflow Variable." >&2; exit 1)'
 )
 
 
@@ -30,24 +54,40 @@ with DAG(
     check_s3_input = BashOperator(
         task_id="check_s3_input",
         bash_command=(
-            f"aws s3 ls {S3_PREFIX}/corrupted/ecommerce_events_with_bad_records.csv"
+            f"{REQUIRE_S3_PREFIX} && "
+            f"aws s3 ls {S3_PREFIX_ARG}/corrupted/ecommerce_events_with_bad_records.csv"
         ),
     )
 
     run_s3_pipeline = BashOperator(
         task_id="run_s3_pipeline",
         bash_command=(
-            f"cd {PROJECT_ROOT} && "
+            f"{REQUIRE_S3_PREFIX} && "
+            f"cd {PROJECT_ROOT_ARG} && "
             f"{COMMAND_ENV} "
-            f"{PROJECT_ROOT}/scripts/run_pipeline_s3.sh {S3_PREFIX}"
+            f"{PROJECT_ROOT_ARG}/scripts/run_pipeline_s3.sh {S3_PREFIX_ARG}"
         ),
     )
 
     show_verification_report = BashOperator(
         task_id="show_verification_report",
         bash_command=(
-            f"aws s3 cp {S3_PREFIX}/reports/output_verification_report.json -"
+            f"{REQUIRE_S3_PREFIX} && "
+            f"aws s3 cp {S3_PREFIX_ARG}/reports/output_verification_report.json -"
         ),
     )
 
-    check_s3_input >> run_s3_pipeline >> show_verification_report
+    load_snowflake_tables = BashOperator(
+        task_id="load_snowflake_tables",
+        bash_command=(
+            f"if [ {shlex.quote(ENABLE_SNOWFLAKE_LOAD)} != true ]; then "
+            'echo "Snowflake load disabled. Set ENABLE_SNOWFLAKE_LOAD=true to enable."; exit 0; '
+            f"fi && {REQUIRE_S3_PREFIX} && "
+            f"cd {PROJECT_ROOT_ARG} && "
+            f"{COMMAND_ENV} "
+            f"{PROJECT_ROOT_ARG}/.venv/bin/python "
+            f"{PROJECT_ROOT_ARG}/scripts/load_snowflake_from_s3.py --s3-prefix {S3_PREFIX_ARG}"
+        ),
+    )
+
+    check_s3_input >> run_s3_pipeline >> load_snowflake_tables >> show_verification_report

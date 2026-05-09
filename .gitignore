@@ -11,3 +11,5 @@ data/analytics/
 reports/*.json
 reports/*.csv
 airflow_home/
+docs/project_deep_dive_recitation.md
+docs/project_deep_dive_recitation.pdf

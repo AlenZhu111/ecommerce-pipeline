@@ -135,9 +135,19 @@ export SPARK_SUBMIT="$(pwd)/.venv/bin/spark-submit"
 airflow dags test ecommerce_event_pipeline 2026-05-08
 ```
 
+If using the Airflow web UI, verify the webserver first:
+
+```bash
+curl -I http://localhost:8080
+```
+
+`HTTP 302` with `Location: /home` is healthy. If the UI opens but shows zero DAGs, confirm `AIRFLOW__CORE__DAGS_FOLDER` points to the project `dags/` folder.
+
 ## AWS EC2 + S3 Version
 
 For detailed EC2/S3 instructions, see [docs/EC2_S3_RUNBOOK.md](docs/EC2_S3_RUNBOOK.md).
+
+For the optional Snowflake warehouse layer, see [docs/SNOWFLAKE_LAYER.md](docs/SNOWFLAKE_LAYER.md).
 
 On EC2, install Java, Python, Spark, Airflow, and AWS CLI. Store data in S3 using this layout:
 

@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-This project is a personal data engineering project that builds a local-to-cloud e-commerce event analytics pipeline using Airflow, PySpark, Kaggle data, and an AWS-ready S3 architecture.
+This project is a personal data engineering project that builds an end-to-end e-commerce event analytics pipeline with local validation, cloud execution on AWS, and an optional Snowflake warehouse layer.
 
 The pipeline ingests e-commerce user behavior events, injects controlled bad records for testing, validates data quality, cleans raw events, writes curated Parquet data, and creates analytics-ready tables for business reporting.
 
@@ -28,7 +28,8 @@ Analytics teams need a reliable pipeline that can:
 - Support generated sample data for fast local testing.
 - Inject controlled bad records to prove data quality checks work.
 - Store cleaned data and analytics outputs in Parquet format.
-- Make the pipeline portable from local development to EC2 and S3.
+- Make the pipeline portable across local validation and cloud execution on EC2/S3.
+- Optionally load final analytics tables from S3 into Snowflake for SQL analytics.
 - Produce clear verification reports for development and operational validation.
 - Document the project so the architecture, data flow, and trade-offs are easy to understand.
 
@@ -37,6 +38,7 @@ Analytics teams need a reliable pipeline that can:
 - This project does not build a production-grade distributed Spark cluster.
 - It does not use managed AWS services such as Glue, EMR, or MWAA in v1.
 - It does not build a full BI dashboard in v1.
+- It does not require Snowflake for the base pipeline; Snowflake is an optional warehouse extension.
 - It does not process the full Kaggle dataset by default; v1 uses a configurable sample size.
 - It does not implement real-time streaming with Kafka in v1.
 
@@ -232,6 +234,30 @@ The project must include scripts and documentation to:
 - Run Spark jobs against S3 paths
 - Write curated and analytics Parquet outputs to S3
 - Copy reports back to S3
+
+### FR9: Optional Snowflake Warehouse Load
+
+The project should optionally load final analytics outputs from S3 into Snowflake using `COPY INTO`.
+
+Inputs:
+
+```text
+s3://<bucket>/ecommerce-event-pipeline/analytics/daily_metrics/
+s3://<bucket>/ecommerce-event-pipeline/analytics/product_metrics/
+```
+
+Snowflake outputs:
+
+```text
+DAILY_METRICS
+PRODUCT_METRICS
+```
+
+The Airflow S3 DAG should keep this task disabled by default and enable it only when:
+
+```text
+ENABLE_SNOWFLAKE_LOAD=true
+```
 
 ## 8. Non-Functional Requirements
 
